@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar {
+            width: 100%;
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+        }
+        .sidebar a {
+            color: white;
+            text-decoration: none;
+            display: block;
+            padding: 10px;
+        }
+        .sidebar a:hover {
+            background: #34495e;
+        }
+        .content {
+            flex: 1;
+            padding: 10px;
+        }
+        .card {
+            margin-bottom: 20px;
+        }
+        .chart-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .chart-labels {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .table-container {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        @media (min-width: 768px) {
+            body {
+                flex-direction: row;
+            }
+            .sidebar {
+                width: 250px;
+                min-height: 100vh;
+            }
+            .content {
+                padding: 20px;
+            }
+            .chart-container {
+                flex-direction: row;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .card {
+                margin-bottom: 10px;
+            }
+            .chart-container {
+                flex-direction: column;
+            }
+            .chart-labels {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .table-container {
+                max-height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>CRM_LMS</h2>
+        <a href="admin.html">Dashboard</a>
+        <a href="contacts.html">Enquiries</a>
+        <a href="create_employee.html">Create Employee</a>
+        <a href="#">Create Loan Account</a>
+        <a href="#">Loan & EMI</a>
+        <a href="#">Users</a>
+        <a href="#">Send SMS</a>
+        <!-- <a href="#">Profile</a> -->
+    </div>
+    <div class="content">
+        <h3>Dashboard</h3>
+        <div class="row chart-container">
+            <div class="col-md-4">
+                <canvas id="emiChart"></canvas>
+                <div class="chart-labels">
+                    <!-- <span>Cleared EMI</span>
+                    <span>Pending EMI</span> -->
+                </div>
+            </div>
+            <div class="col-md-4">
+                <canvas id="customerChart"></canvas>
+                <div class="chart-labels">
+                    <!-- <span>Total Enquiry</span>
+                    <span>Total Customer</span>
+                    <span>Loan Account Created</span> -->
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card bg-danger text-white text-center p-3">
+                    <h5>4</h5>
+                    <p>Loan Accounts</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white text-center p-3">
+                    <h5>2</h5>
+                    <p>Active Loan </p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white text-center p-3">
+                    <h5>2</h5>
+                    <p>Total Cleaned EMI</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white text-center p-3">
+                    <h5>1</h5>
+                    <p>Total Pending EMI</p>
+                </div>
+            </div>
+        </div>
+    
+        
+        <button class="btn btn-primary" onclick="exportToExcel()">View Report</button>
+    <div class="table-container mt-4">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Address</th>
+                    <th>Loan Amount</th>
+                    <th>Loan Tenure</th>
+                    <th>Guarantor Name</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="contactDataTable">
+                <!-- Data will be populated here -->
+            </tbody>
+        </table>
+    </div>
+</div>
+</div>
+
+<div class="modal fade" id="addCustomerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" class="form-control mb-2" placeholder="Phone Number">
+                <input type="text" class="form-control mb-2" placeholder="PAN">
+                <button class="btn btn-success">Fetch Customer Data</button>
+                <input type="text" class="form-control mb-2" placeholder="Name">
+                <input type="text" class="form-control mb-2" placeholder="Guarantor">
+                <input type="text" class="form-control mb-2" placeholder="Guarantor Contact">
+                <input type="text" class="form-control mb-2" placeholder="Address">
+                <input type="text" class="form-control mb-2" placeholder="Aadhaar">
+                <input type="text" class="form-control mb-2" placeholder="Pin Code">
+                <input type="text" class="form-control mb-2" placeholder="DOB">
+                <select class="form-control mb-2">
+                    <option>Male</option>
+                    <option>Female</option>
+                </select>
+                <input type="file" class="form-control mb-2">
+                <button class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+                    <button class="btn btn-primary" onclick="addCustomer()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<div class="modal fade" id="addCustomerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" class="form-control mb-2" placeholder="Phone Number">
+                <input type="text" class="form-control mb-2" placeholder="PAN">
+                <button class="btn btn-success">Fetch Customer Data</button>
+                <input type="text" class="form-control mb-2" placeholder="Name">
+                <input type="text" class="form-control mb-2" placeholder="Guarantor">
+                <input type="text" class="form-control mb-2" placeholder="Guarantor Contact">
+                <input type="text" class="form-control mb-2" placeholder="Address">
+                <input type="text" class="form-control mb-2" placeholder="Aadhaar">
+                <input type="text" class="form-control mb-2" placeholder="Pin Code">
+                <input type="text" class="form-control mb-2" placeholder="DOB">
+                <select class="form-control mb-2">
+                    <option>Male</option>
+                    <option>Female</option>
+                </select>
+                <input type="file" class="form-control mb-2">
+                <button class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+                <button class="btn btn-primary">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+
+<script>
+    const emiCtx = document.getElementById('emiChart').getContext('2d');
+    new Chart(emiCtx, {
+        type: 'pie',
+        data: {
+            labels: ['Cleared EMI', 'Pending EMI'],
+            datasets: [{
+                data: [10, 90],
+                backgroundColor: ['green', 'red']
+            }]
+        }
+    });
+
+    const customerCtx = document.getElementById('customerChart').getContext('2d');
+    new Chart(customerCtx, {
+        type: 'pie',
+        data: {
+            labels: ['Total Enquiry', 'Total Customer', 'Loan Account Created'],
+            datasets: [{
+                data: [40, 30, 30],
+                backgroundColor: ['blue', 'orange', 'red']
+            }]
+        }
+    });
+
+    // Handling Customer Addition
+   
+// =====================================
+//     function loadTableData() {
+//         const contacts = JSON.parse(localStorage.getItem('contacts')) || [];
+//         const contactDataTable = document.getElementById('contactDataTable');
+
+//         contactDataTable.innerHTML = "";
+
+//         contacts.forEach((contact, index) => {
+//             const row = document.createElement('tr');
+//             row.innerHTML = `
+//                 <td>${index + 1}</td>
+//                 <td>${contact.personalDetails?.name || 'N/A'}</td>
+//                 <td>${contact.personalDetails?.email || 'N/A'}</td>
+//                 <td>${contact.personalDetails?.phone || 'N/A'}</td>
+//                 <td>${contact.personalDetails?.address || 'N/A'}</td>
+//                 <td>₹${contact.loanDetails?.loanAmount || 'N/A'}</td>
+//                 <td>${contact.loanDetails?.tenure || 'N/A'} months</td>
+//                 <td>${contact.guarantorDetails?.name || 'N/A'}</td>
+//                 <td>
+//                     <span class="badge bg-${contact.status === 'Approved' ? 'success' : 'warning'}">
+//                         ${contact.status || 'Pending'}
+//                     </span>
+//                 </td>
+//                 <td>
+//                     <a href="viewDetails.html?id=${index}" class="btn btn-primary btn-sm">View</a>
+//                     <button onclick="deleteContact(${index})" class="btn btn-danger btn-sm">Delete</button>
+//                 </td>
+//             `;
+//             contactDataTable.appendChild(row);
+//         });
+//     }
+
+//     function deleteContact(index) {
+//         if (confirm("Are you sure you want to delete this contact?")) {
+//             const contacts = JSON.parse(localStorage.getItem('contacts')) || [];
+//             contacts.splice(index, 1);
+//             localStorage.setItem('contacts', JSON.stringify(contacts));
+//             loadTableData();
+//         }
+//     }
+
+    
+
+//     function exportToExcel() {
+//     let table = document.getElementById("contactDataTable");
+//     let wb = XLSX.utils.table_to_book(table, {sheet: "contacts"});
+//     XLSX.writeFile(wb, "Customer_Data.xlsx");
+//     window.onload = loadTableData;
+// }
+
+function loadTableData() {
+        const contacts = JSON.parse(localStorage.getItem('contacts')) || [];
+        const contactDataTable = document.getElementById('contactDataTable');
+
+        contactDataTable.innerHTML = "";
+
+        contacts.forEach((contact, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${contact.personalDetails?.name || 'N/A'}</td>
+                <td>${contact.personalDetails?.email || 'N/A'}</td>
+                <td>${contact.personalDetails?.phone || 'N/A'}</td>
+                <td>${contact.personalDetails?.address || 'N/A'}</td>
+                <td>₹${contact.loanDetails?.loanAmount || 'N/A'}</td>
+                <td>${contact.loanDetails?.tenure || 'N/A'} months</td>
+                <td>${contact.guarantorDetails?.name || 'N/A'}</td>
+                <td>
+                    <span class="badge bg-${contact.status === 'Approved' ? 'success' : 'warning'}">
+                        ${contact.status || 'Pending'}
+                    </span>
+                </td>
+                <td>
+                    <a href="viewDetails.html?id=${index}" class="btn btn-primary btn-sm">View</a>
+                    <button onclick="deleteContact(${index})" class="btn btn-danger btn-sm">Delete</button>
+                </td>
+            `;
+            contactDataTable.appendChild(row);
+        });
+    }
+
+    function deleteContact(index) {
+        if (confirm("Are you sure you want to delete this contact?")) {
+            const contacts = JSON.parse(localStorage.getItem('contacts')) || [];
+            contacts.splice(index, 1);
+            localStorage.setItem('contacts', JSON.stringify(contacts));
+            loadTableData();
+        }
+    }
+
+    function exportToExcel() {
+        let table = document.querySelector(".table");
+        let wb = XLSX.utils.book_new();
+        let ws = XLSX.utils.table_to_sheet(table);
+        
+        XLSX.utils.book_append_sheet(wb, ws, "Contacts");
+        XLSX.writeFile(wb, "Customer_Data.xlsx");
+    }
+
+    window.onload = loadTableData;
+
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>
